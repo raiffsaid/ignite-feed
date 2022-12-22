@@ -1,18 +1,43 @@
-import { format, formatDistanceToNow } from "date-fns";
-import ptBR from "date-fns/locale/pt-BR";
-import { Avatar } from "./Avatar";
-import { Comment } from "./Comment";
-import styles from "./Post.module.css"
+import { format, formatDistanceToNow } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
+import { useState } from 'react';
+import { Avatar } from './Avatar';
+import { Comment } from './Comment';
+import styles from './Post.module.css';
 
 export function Post({ author, publishedAt, content }) {
+  const [comments, setComments] = useState([
+    'Post muito bacana, hein?!'
+  ]);
+  const [newCommentText, setNewCommentText] = useState('');
+
   const publishedDateFormatted = format(publishedAt, "d 'de' LLLL 'às' HH:mm'h'", {
     locale: ptBR
-  })
+  });
 
   const publishedDateRelativeToNow = formatDistanceToNow(publishedAt, {
     locale: ptBR,
     addSuffix: true
-  })
+  });
+
+  const handleCreateNewComment = (event) => {
+    event.preventDefault();
+
+    setComments([...comments, newCommentText]);
+    setNewCommentText('');
+  };
+
+  const handleNewCommentChange = (event) => {
+    setNewCommentText(event.target.value);
+  };
+
+  const deleteComment = (commentToDelete) => {
+    const commentsWithoutDeletedOne = comments.filter(comment => {
+      return comment !== commentToDelete;
+    });
+
+    setComments(commentsWithoutDeletedOne);
+  };
 
   return (
     <article className={styles.post}>
@@ -34,19 +59,23 @@ export function Post({ author, publishedAt, content }) {
         {content.map(line => {
           switch (line.type) {
             case 'paragraph':
-              return <p>{line.content}</p>
+              return <p key={line.content}>{line.content}</p>
             case 'link':
-              return <p><a href="#">{line.content}</a></p>
+              return <p key={line.content}><a href="#">{line.content}</a></p>
             default:
               break;
           }
         })}
       </div>
 
-      <form className={styles.commentForm}>
+      <form onSubmit={handleCreateNewComment} className={styles.commentForm}>
         <strong>Deixe seu feedback</strong>
 
-        <textarea placeholder="Deixe um comentário" />
+        <textarea 
+          placeholder="Deixe um comentário"
+          value={newCommentText} 
+          onChange={handleNewCommentChange}
+        />
 
         <footer>
           <button type="submit">Publicar</button>
@@ -54,9 +83,13 @@ export function Post({ author, publishedAt, content }) {
       </form>
 
       <div className={styles.commentList}>
-        <Comment />
-        <Comment />
-        <Comment />
+        {comments.map((comment) => (
+          <Comment 
+            key={comment} 
+            content={comment} 
+            onDeleteComment={deleteComment} 
+          />
+        ))}
       </div>
     </article>
   );
